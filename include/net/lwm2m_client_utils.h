@@ -112,6 +112,11 @@ int lwm2m_signal_meas_info_index_to_inst_id(int index);
 int init_neighbour_cell_info(void);
 #endif
 
+#if defined(CONFIG_LWM2M_CLIENT_UTILS_LOCATION_ASSIST_OBJ_SUPPORT)
+#define LOCATION_ASSIST_OBJECT_ID 50001
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
