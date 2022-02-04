@@ -16,6 +16,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "lwm2m_object.h"
 #include "lwm2m_engine.h"
 #include <net/lwm2m_client_utils.h>
+#include <modem/location.h>
 
 #define LOCATION_ASSIST_VERSION_MAJOR 1
 #define LOCATION_ASSIST_VERSION_MINOR 0
@@ -42,8 +43,10 @@ static int32_t pgps_pred_count;
 static int32_t pgps_pred_interval;
 static int32_t pgps_start_gps_day;
 static int32_t pgps_start_gps_time_of_day;
-//Assistance data
-static char assist_data[1024];
+/* Assistance data */
+static char assist_buf[4096];
+
+
 static int32_t result;
 static float latitude;
 static float longitude;
@@ -77,6 +80,29 @@ static struct lwm2m_engine_obj_inst inst;
 static struct lwm2m_engine_res res[LOCATION_ASSIST_MAX_ID];
 static struct lwm2m_engine_res_inst res_inst[RESOURCE_INSTANCE_COUNT];
 
+static void *get_assist_buf(uint16_t obj_inst_id, uint16_t res_id,
+			      uint16_t res_inst_id, size_t *data_len)
+{
+	*data_len = sizeof(assist_buf);
+	return assist_buf;
+}
+
+static int location_assist_write_cb(uint16_t obj_inst_id, uint16_t res_id,
+			    uint16_t res_inst_id, uint8_t *data, uint16_t data_len,
+			    bool last_block, size_t total_size)
+{
+	LOG_INF("Writing assistance data %u", data_len);
+	int err = 0;
+
+	err = location_agps_data_process(data, data_len);
+	if (err) {
+		LOG_WRN("Unable to process A-GPS data, error: %d", err);
+	} else {
+		LOG_INF("A-GPS data processed");
+	}
+	return err;
+}
+
 static struct lwm2m_engine_obj_inst *location_assist_create(uint16_t obj_inst_id)
 {
 	int i = 0, j = 0;
@@ -96,8 +122,8 @@ static struct lwm2m_engine_obj_inst *location_assist_create(uint16_t obj_inst_id
 			  &pgps_start_gps_day, sizeof(pgps_start_gps_day));
 	INIT_OBJ_RES_DATA(LOCATION_ASSIST_PGPS_START_GPS_TIME_OF_DAY, res, i, res_inst, j,
 			  &pgps_start_gps_time_of_day, sizeof(pgps_start_gps_time_of_day));
-	INIT_OBJ_RES_DATA(LOCATION_ASSIST_ASSIST_DATA, res, i, res_inst, j,
-			  &assist_data, sizeof(assist_data));
+	INIT_OBJ_RES_OPT(LOCATION_ASSIST_ASSIST_DATA, res, i, res_inst, j, 1, false, true, NULL,
+			 get_assist_buf, NULL, location_assist_write_cb, NULL);
 	INIT_OBJ_RES_DATA(LOCATION_ASSIST_RESULT_CODE, res, i, res_inst, j,
 			  &result, sizeof(result));
 	INIT_OBJ_RES_DATA(LOCATION_ASSIST_LATITUDE, res, i, res_inst, j,
@@ -107,7 +133,7 @@ static struct lwm2m_engine_obj_inst *location_assist_create(uint16_t obj_inst_id
 	INIT_OBJ_RES_DATA(LOCATION_ASSIST_ALTITUDE, res, i, res_inst, j,
 			  &altitude, sizeof(altitude));
 	INIT_OBJ_RES_DATA(LOCATION_ASSIST_ACCURACY, res, i, res_inst, j,
-			  &accuracy, sizeof(accuracy));			  			  			  			  			  			  			  			  			  
+			  &accuracy, sizeof(accuracy));
 
 	inst.resources = res;
 	inst.resource_count = i;
