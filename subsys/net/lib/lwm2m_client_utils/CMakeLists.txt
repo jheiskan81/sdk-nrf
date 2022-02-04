@@ -16,4 +16,7 @@ zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_SECURITY_OBJ_SUPPORT lwm2
 zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_SIGNAL_MEAS_INFO_OBJ_SUPPORT
 			     lwm2m/ecid_signal_meas_info.c
 			     lwm2m/neighbour_cell_info.c)
-zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_LOCATION_ASSIST_OBJ_SUPPORT lwm2m/location_assistance_obj.c)
+zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_LOCATION_ASSIST_OBJ_SUPPORT 
+			     lwm2m/location_assistance_obj.c
+			     location/gps_agps_request_event.c
+			     location/location_event_handler.c)
