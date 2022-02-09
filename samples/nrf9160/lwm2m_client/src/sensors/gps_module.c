@@ -9,6 +9,7 @@
 #include <event_manager.h>
 
 #include "gps_pvt_event.h"
+#include <nrf_modem_gnss.h>
 
 #if defined(CONFIG_GPS_USE_EXTERNAL)
 #define GPS_DEV_LABEL	"NRF9160_GPS"
@@ -18,6 +19,10 @@
 
 #include <logging/log.h>
 LOG_MODULE_REGISTER(gps_module, CONFIG_APP_LOG_LEVEL);
+
+extern int lwm2m_location_assist_request(struct nrf_modem_gnss_agps_data_frame *agps);
+
+static struct nrf_modem_gnss_agps_data_frame agps;
 
 static struct gps_pvt pvt_data;
 static const struct device *gps_dev;
@@ -38,6 +43,7 @@ static void gps_event_handler(const struct device *dev, struct gps_event *evt)
 {
 	ARG_UNUSED(dev);
 	static uint32_t timestamp_prev;
+	int ret;
 
 	switch (evt->type) {
 	case GPS_EVT_SEARCH_STARTED:
@@ -76,7 +82,15 @@ static void gps_event_handler(const struct device *dev, struct gps_event *evt)
 	case GPS_EVT_OPERATION_UNBLOCKED:
 		break;
 	case GPS_EVT_AGPS_DATA_NEEDED:
-		LOG_DBG("GPS requests AGPS Data. AGPS is not implemented.");
+		LOG_DBG("GPS requests AGPS Data.");
+		ret = nrf_modem_gnss_read(&agps, sizeof(agps), NRF_MODEM_GNSS_DATA_AGPS_REQ);
+		if (ret) {
+			LOG_ERR("nrf_modem_gnss_read() fail %d", ret);
+			break;
+		}
+		/* Generate */
+		lwm2m_location_assist_request(&agps);
+
 		break;
 	case GPS_EVT_ERROR:
 		LOG_DBG("GPS error occurred");

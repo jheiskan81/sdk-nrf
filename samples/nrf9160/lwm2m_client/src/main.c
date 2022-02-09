@@ -70,6 +70,11 @@ void client_acknowledge(void)
 	lwm2m_acknowledge(&client);
 }
 
+struct lwm2m_ctx *lwm2m_app_ctx_ptr_get(void)
+{
+	return &client;
+}
+
 static int remove_whitespace(char *buf)
 {
 	size_t i, j = 0, len;

@@ -18,6 +18,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <net/lwm2m_client_utils.h>
 #include <modem/location.h>
 
+struct lwm2m_ctx *lwm2m_app_ctx_ptr_get(void);
+
 #define LOCATION_ASSIST_VERSION_MAJOR 1
 #define LOCATION_ASSIST_VERSION_MINOR 0
 
@@ -36,6 +38,16 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define LOCATION_ASSIST_ACCURACY			11
 
 #define LOCATION_ASSIST_MAX_ID				12
+
+#define LOCATION_ASSIST_NEEDS_UTC			BIT(0)
+#define LOCATION_ASSIST_NEEDS_EPHEMERIES		BIT(1)
+#define LOCATION_ASSIST_NEEDS_ALMANAC			BIT(2)
+#define LOCATION_ASSIST_NEEDS_KLOBUCHAR			BIT(3)
+#define LOCATION_ASSIST_NEEDS_NEQUICK			BIT(4)
+#define LOCATION_ASSIST_NEEDS_TOW			BIT(5)
+#define LOCATION_ASSIST_NEEDS_CLOCK			BIT(6)
+#define LOCATION_ASSIST_NEEDS_LOCATION			BIT(7)
+#define LOCATION_ASSIST_NEEDS_INTEGRITY			BIT(8)
 
 static int32_t assist_type;
 static int32_t agps_mask;
@@ -161,6 +173,61 @@ static int lwm2m_location_assist_init(const struct device *dev)
 		LOG_ERR("Create location assist object error: %d", ret);
 	}
 
+	return 0;
+}
+
+int lwm2m_location_assist_request(struct nrf_modem_gnss_agps_data_frame *agps)
+{
+	LOG_INF("Requesting A-GPS data, ephe 0x%08x, alm 0x%08x, flags 0x%02x",
+		agps->sv_mask_ephe, agps->sv_mask_alm, agps->data_flags);
+
+	uint32_t mask = 0;
+
+	if (agps->data_flags & NRF_MODEM_GNSS_AGPS_GPS_UTC_REQUEST) {
+		mask |= LOCATION_ASSIST_NEEDS_UTC;
+	}
+	if (agps->sv_mask_ephe) {
+		mask |= LOCATION_ASSIST_NEEDS_EPHEMERIES;
+	}
+	if (agps->sv_mask_alm) {
+		mask |= LOCATION_ASSIST_NEEDS_ALMANAC;
+	}
+	if (agps->data_flags & NRF_MODEM_GNSS_AGPS_KLOBUCHAR_REQUEST) {
+
+		mask |= LOCATION_ASSIST_NEEDS_KLOBUCHAR;
+	}
+	if (agps->data_flags & NRF_MODEM_GNSS_AGPS_NEQUICK_REQUEST) {
+		mask |= LOCATION_ASSIST_NEEDS_NEQUICK;
+	}
+	if (agps->data_flags & NRF_MODEM_GNSS_AGPS_SYS_TIME_AND_SV_TOW_REQUEST) {
+		mask |= LOCATION_ASSIST_NEEDS_TOW;
+		mask |= LOCATION_ASSIST_NEEDS_CLOCK;
+	}
+	if (agps->data_flags & NRF_MODEM_GNSS_AGPS_POSITION_REQUEST) {
+		mask |= LOCATION_ASSIST_NEEDS_LOCATION;
+	}
+	if (agps->data_flags & NRF_MODEM_GNSS_AGPS_INTEGRITY_REQUEST) {
+		mask |= LOCATION_ASSIST_NEEDS_INTEGRITY;
+	}
+	/* Store mask to object resource */
+	lwm2m_engine_set_s32(LWM2M_PATH(LOCATION_ASSIST_OBJECT_ID, 0, LOCATION_ASSIST_AGPS_MASK),
+			     mask);
+	lwm2m_engine_set_s32(LWM2M_PATH(LOCATION_ASSIST_OBJECT_ID, 0, LOCATION_ASSIST_ASSIST_TYPE),
+			     5);
+
+	char const *send_path[7] = {
+		LWM2M_PATH(LOCATION_ASSIST_OBJECT_ID, 0, LOCATION_ASSIST_ASSIST_TYPE),
+		LWM2M_PATH(LOCATION_ASSIST_OBJECT_ID, 0, LOCATION_ASSIST_AGPS_MASK),
+		LWM2M_PATH(4, 0, 8), /* ECI */
+		LWM2M_PATH(4, 0, 9), /* MNC */
+		LWM2M_PATH(4, 0, 10), /* MCC */
+		LWM2M_PATH(4, 0, 2), /* RSRP */
+		LWM2M_PATH(4, 0, 12) /* LAC */
+	};
+	lwm2m_engine_send(lwm2m_app_ctx_ptr_get(), send_path, 7,
+		      true);
+
+	/* Send Request to server */
 	return 0;
 }
 
