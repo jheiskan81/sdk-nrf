@@ -14,6 +14,7 @@
 
 #include <net/lwm2m_client_utils.h>
 #include <net/lwm2m_client_utils_fota.h>
+#include <net/lwm2m_client_utils_location.h>
 #include <event_manager.h>
 #include <date_time.h>
 
@@ -181,9 +182,11 @@ static int lwm2m_setup(void)
 #if defined(CONFIG_LWM2M_CLIENT_UTILS_SIGNAL_MEAS_INFO_OBJ_SUPPORT)
 	init_neighbour_cell_info();
 #endif
-
 #if defined(CONFIG_LWM2M_PORTFOLIO_OBJ_SUPPORT)
 	lwm2m_init_portfolio_object();
+#endif
+#if defined(CONFIG_LWM2M_CLIENT_UTILS_LOCATION_ASSIST_OBJ_SUPPORT)
+	location_event_handler_init(&client);
 #endif
 	return 0;
 }
