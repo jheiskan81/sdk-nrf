@@ -7,8 +7,10 @@
 #include <zephyr.h>
 #include <drivers/gps.h>
 #include <event_manager.h>
+#include <net/lwm2m_client_utils_location.h>
 
 #include "gps_pvt_event.h"
+
 
 #if defined(CONFIG_GPS_USE_EXTERNAL)
 #define GPS_DEV_LABEL	"NRF9160_GPS"
@@ -19,6 +21,7 @@
 #include <logging/log.h>
 LOG_MODULE_REGISTER(gps_module, CONFIG_APP_LOG_LEVEL);
 
+static struct gps_agps_request agps_req;
 static struct gps_pvt pvt_data;
 static const struct device *gps_dev;
 static struct gps_config gps_cfg = { .nav_mode = GPS_NAV_MODE_PERIODIC,
@@ -56,7 +59,7 @@ static void gps_event_handler(const struct device *dev, struct gps_event *evt)
 		if (k_uptime_get_32() - timestamp_prev < CONFIG_APP_GPS_HOLD_TIME * MSEC_PER_SEC) {
 			break;
 		}
-		LOG_DBG("Received PVT Fix. GPS search completed.");
+		LOG_INF("Received PVT Fix. GPS search completed.");
 		struct gps_pvt_event *event = new_gps_pvt_event();
 
 		memcpy(&pvt_data, &evt->pvt, sizeof(struct gps_pvt));
@@ -75,9 +78,15 @@ static void gps_event_handler(const struct device *dev, struct gps_event *evt)
 		break;
 	case GPS_EVT_OPERATION_UNBLOCKED:
 		break;
-	case GPS_EVT_AGPS_DATA_NEEDED:
-		LOG_DBG("GPS requests AGPS Data. AGPS is not implemented.");
+	case GPS_EVT_AGPS_DATA_NEEDED: {
+		LOG_INF("GPS requests AGPS Data. Sending request to LwM2M server");
+		struct gps_agps_request_event *event = new_gps_agps_request_event();
+
+		memcpy(&agps_req, &evt->agps_request, sizeof(struct gps_agps_request));
+		event->agps_req = agps_req;
+		EVENT_SUBMIT(event);
 		break;
+	}
 	case GPS_EVT_ERROR:
 		LOG_DBG("GPS error occurred");
 		break;
