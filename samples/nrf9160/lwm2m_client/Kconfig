@@ -173,6 +173,26 @@ config APP_NEIGHBOUR_CELL_SCAN_INTERVAL
 	help
 	  Low value on interval may reduce the performance of the system.
 
+choice
+	default LWM2M_SAMPLE_GPS_ANTENNA_ONBOARD
+	prompt "Select which antenna to use for GNSS"
+
+config LWM2M_SAMPLE_GPS_ANTENNA_ONBOARD
+	bool "Use onboard antenna"
+
+config LWM2M_SAMPLE_GPS_ANTENNA_EXTERNAL
+	bool "Use external antenna"
+
+endchoice
+
+config LWM2M_CLIENT_SAMPLE_COEX0
+	string "AT%XCOEX0 command"
+	default "AT\%XCOEX0=1,1,1565,1586" if LWM2M_SAMPLE_GPS_ANTENNA_ONBOARD
+	default "AT\%XCOEX0" if LWM2M_SAMPLE_GPS_ANTENNA_EXTERNAL
+	help
+	  Defines the AT%XCOEX0 command to be sent to GNSS module. Leave
+	  empty if this command should not be sent.
+
 module = APP
 module-dep = LOG
 module-str = Log level for sample

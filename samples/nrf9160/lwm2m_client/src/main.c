@@ -462,6 +462,7 @@ void main(void)
 				       LWM2M_RD_CLIENT_FLAG_BOOTSTRAP :
 				       0;
 	int ret;
+	const char *xcoex0_command = CONFIG_LWM2M_CLIENT_SAMPLE_COEX0;
 
 	LOG_INF(APP_BANNER);
 
@@ -495,6 +496,11 @@ void main(void)
 	/* Modem FW update needs to be verified before modem is used. */
 	lwm2m_verify_modem_fw_update();
 #endif
+
+	if (nrf_modem_at_printf("%s", xcoex0_command) != 0) {
+		LOG_ERR("Failed to set COEX0 configuration");
+		return;
+	}
 
 	LOG_INF("Initializing modem.");
 	ret = lte_lc_init();
