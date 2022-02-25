@@ -17,3 +17,11 @@ static int log_gps_agps_request_event(const struct event_header *eh, char *buf, 
 }
 
 EVENT_TYPE_DEFINE(gps_agps_request_event, false, log_gps_agps_request_event, NULL);
+
+static int log_cell_location_request_event(const struct event_header *eh, char *buf, size_t buf_len)
+{
+	EVENT_MANAGER_LOG(eh, "got cell location request event");
+	return 0;
+}
+
+EVENT_TYPE_DEFINE(cell_location_request_event, false, log_cell_location_request_event, NULL);
