@@ -381,6 +381,11 @@ void location_assist_agps_request_set(uint32_t request_mask)
 	return;
 }
 
+void location_assist_cell_request_set()
+{
+	assist_type = 1;
+}
+
 static struct lwm2m_engine_obj_inst *location_assist_create(uint16_t obj_inst_id)
 {
 	int i = 0, j = 0;

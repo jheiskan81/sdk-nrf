@@ -115,6 +115,7 @@ int init_neighbour_cell_info(void);
 #if defined(CONFIG_LWM2M_CLIENT_UTILS_LOCATION_ASSIST_OBJ_SUPPORT)
 #define LOCATION_ASSIST_OBJECT_ID 50001
 void location_assist_agps_request_set(uint32_t request_mask);
+void location_assist_cell_request_set();
 #endif
 
 #ifdef __cplusplus

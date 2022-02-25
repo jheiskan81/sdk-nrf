@@ -20,6 +20,10 @@ LOG_MODULE_REGISTER(MODULE, CONFIG_LWM2M_LOG_LEVEL);
 
 static bool event_handler(const struct event_header *eh)
 {
+	if (client_ctx == 0) {
+		return false;
+	}
+
 	if (is_gps_agps_request_event(eh)) {
 		LOG_INF("Got agps request event");
 		struct gps_agps_request_event *event = cast_gps_agps_request_event(eh);
@@ -70,6 +74,22 @@ static bool event_handler(const struct event_header *eh)
 				  true);
 
 		return true;
+	} else if(is_cell_location_request_event(eh)) {
+		LOG_INF("Got cell location request event");
+
+		location_assist_cell_request_set();
+
+		char const *send_path[5] = {
+		LWM2M_PATH(LOCATION_ASSIST_OBJECT_ID, 0, LOCATION_ASSIST_ASSIST_TYPE),
+		LWM2M_PATH(4, 0, 8), /* ECI */
+		LWM2M_PATH(4, 0, 9), /* MNC */
+		LWM2M_PATH(4, 0, 10), /* MCC */
+		LWM2M_PATH(4, 0, 12) /* LAC */
+		};
+
+		/* Send Request to server */
+		lwm2m_engine_send(client_ctx, send_path, 5,
+				  true);
 	}
 
 	return false;
@@ -77,6 +97,7 @@ static bool event_handler(const struct event_header *eh)
 
 EVENT_LISTENER(MODULE, event_handler);
 EVENT_SUBSCRIBE(MODULE, gps_agps_request_event);
+EVENT_SUBSCRIBE(MODULE, cell_location_request_event);
 
 int location_event_handler_init(struct lwm2m_ctx *ctx)
 {
