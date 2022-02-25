@@ -401,6 +401,11 @@ static void rd_client_event(struct lwm2m_ctx *client, enum lwm2m_rd_client_event
 #if defined(CONFIG_APP_GPS)
 		start_gps_search();
 #endif
+#if defined(CONFIG_LWM2M_CLIENT_UTILS_LOCATION_ASSIST_SINGLE_CELL)
+		LOG_INF("Send cell location request event");
+		struct cell_location_request_event *event = new_cell_location_request_event();
+		EVENT_SUBMIT(event);
+#endif
 		break;
 
 	case LWM2M_RD_CLIENT_EVENT_REG_UPDATE_FAILURE:
