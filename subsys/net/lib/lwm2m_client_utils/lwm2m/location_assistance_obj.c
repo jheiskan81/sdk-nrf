@@ -21,15 +21,14 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define LOCATION_ASSIST_VERSION_MAJOR 1
 #define LOCATION_ASSIST_VERSION_MINOR 0
 
-#define LOCATION_ASSIST_NEEDS_UTC			BIT(0)
-#define LOCATION_ASSIST_NEEDS_EPHEMERIES		BIT(1)
-#define LOCATION_ASSIST_NEEDS_ALMANAC			BIT(2)
-#define LOCATION_ASSIST_NEEDS_KLOBUCHAR			BIT(3)
-#define LOCATION_ASSIST_NEEDS_NEQUICK			BIT(4)
-#define LOCATION_ASSIST_NEEDS_TOW			BIT(5)
-#define LOCATION_ASSIST_NEEDS_CLOCK			BIT(6)
-#define LOCATION_ASSIST_NEEDS_LOCATION			BIT(7)
-#define LOCATION_ASSIST_NEEDS_INTEGRITY			BIT(8)
+/* Assistance types */
+#define ASSISTANCE_REQUEST_TYPE_IDLE			0
+#define ASSISTANCE_REQUEST_TYPE_SINGLECELL_INFORM	1
+#define ASSISTANCE_REQUEST_TYPE_MULTICELL_INFORM	2
+#define ASSISTANCE_REQUEST_TYPE_SINGLECELL_REQUEST	3
+#define ASSISTANCE_REQUEST_TYPE_MULTICELL_REQUEST	4
+#define ASSISTANCE_REQUEST_TYPE_AGPS			5
+#define ASSISTANCE_REQUEST_TYPE_PGPS			6
 
 /* Location Assistance resource IDs */
 #define LOCATION_ASSIST_ASSIST_TYPE			0
@@ -369,7 +368,7 @@ void location_assist_agps_request_set(uint32_t request_mask)
 
 	/* Store mask to object resource */
 	agps_mask = request_mask;
-	assist_type = 5;
+	assist_type = ASSISTANCE_REQUEST_TYPE_AGPS;
 
 	/* TODO: Remove this when server really sends the assistance data */
 	err = location_agps_data_process(rawData, sizeof(rawData));
@@ -381,9 +380,22 @@ void location_assist_agps_request_set(uint32_t request_mask)
 	return;
 }
 
+void location_assist_cell_inform_set()
+{
+#if defined(CONFIG_LWM2M_CLIENT_UTILS_SIGNAL_MEAS_INFO_OBJ_SUPPORT)
+	assist_type = ASSISTANCE_REQUEST_TYPE_MULTICELL_INFORM;
+#else
+	assist_type = ASSISTANCE_REQUEST_TYPE_SINGLECELL_INFORM;
+#endif
+}
+
 void location_assist_cell_request_set()
 {
-	assist_type = 1;
+#if defined(CONFIG_LWM2M_CLIENT_UTILS_SIGNAL_MEAS_INFO_OBJ_SUPPORT)
+	assist_type = ASSISTANCE_REQUEST_TYPE_MULTICELL_REQUEST;
+#else
+	assist_type = ASSISTANCE_REQUEST_TYPE_SINGLECELL_REQUEST;
+#endif
 }
 
 static struct lwm2m_engine_obj_inst *location_assist_create(uint16_t obj_inst_id)
