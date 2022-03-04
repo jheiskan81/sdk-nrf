@@ -25,3 +25,11 @@ static int log_cell_location_request_event(const struct event_header *eh, char *
 }
 
 EVENT_TYPE_DEFINE(cell_location_request_event, false, log_cell_location_request_event, NULL);
+
+static int log_cell_location_inform_event(const struct event_header *eh, char *buf, size_t buf_len)
+{
+	EVENT_MANAGER_LOG(eh, "got cell location inform event");
+	return 0;
+}
+
+EVENT_TYPE_DEFINE(cell_location_inform_event, false, log_cell_location_inform_event, NULL);

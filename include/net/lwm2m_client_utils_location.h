@@ -45,6 +45,12 @@ struct cell_location_request_event {
 
 EVENT_TYPE_DECLARE(cell_location_request_event);
 
+struct cell_location_inform_event {
+	struct event_header header;
+};
+
+EVENT_TYPE_DECLARE(cell_location_inform_event);
+
 int location_event_handler_init(struct lwm2m_ctx *ctx);
 
 #endif /* LWM2M_CLIENT_UTILS_LOCATION_H__ */
