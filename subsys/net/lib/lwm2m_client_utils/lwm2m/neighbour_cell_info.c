@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <net/lwm2m.h>
 #include <net/lwm2m_client_utils.h>
+#include <net/lwm2m_client_utils_location.h>
 #include <lwm2m_engine.h>
 
 #include <modem/modem_info.h>
@@ -17,6 +18,13 @@
 #include <logging/log.h>
 LOG_MODULE_REGISTER(lwm2m_neighbour_cell, CONFIG_LWM2M_CLIENT_UTILS_LOG_LEVEL);
 #define MAX_INSTANCE_COUNT CONFIG_LWM2M_CLIENT_UTILS_SIGNAL_MEAS_INFO_INSTANCE_COUNT
+
+/* Modem returns RSRP and RSRQ as index values which require
+ * a conversion to dBm and dB respectively. See modem AT
+ * command reference guide for more information.
+ */
+#define RSRP_ADJ(rsrp) (rsrp - ((rsrp <= 0) ? 140 : 141))
+#define RSRQ_ADJ(rsrq) ((rsrq * 0.5) - 19)
 
 static void update_signal_meas_object(const struct lte_lc_ncell *const cell, uint16_t index)
 {
@@ -33,9 +41,9 @@ static void update_signal_meas_object(const struct lte_lc_ncell *const cell, uin
 	snprintk(path, sizeof(path), "10256/%" PRIu16 "/2", obj_inst_id);
 	lwm2m_engine_set_s32(path, cell->earfcn);
 	snprintk(path, sizeof(path), "10256/%" PRIu16 "/3", obj_inst_id);
-	lwm2m_engine_set_s32(path, cell->rsrp - MODEM_INFO_RSRP_OFFSET_VAL);
+	lwm2m_engine_set_s32(path, RSRP_ADJ(cell->rsrp));
 	snprintk(path, sizeof(path), "10256/%" PRIu16 "/4", obj_inst_id);
-	lwm2m_engine_set_s32(path, cell->rsrq);
+	lwm2m_engine_set_s32(path, RSRQ_ADJ(cell->rsrq));
 	snprintk(path, sizeof(path), "10256/%" PRIu16 "/5", obj_inst_id);
 	lwm2m_engine_set_s32(path, cell->time_diff);
 }
@@ -79,6 +87,11 @@ static void update_signal_meas_objects(const struct lte_lc_cells_info *const cel
 		}
 	}
 	neighbours = cells->ncells_count;
+	if(neighbours > 0) {
+		LOG_INF("Send cell location request event");
+		struct cell_location_request_event *event = new_cell_location_request_event();
+		EVENT_SUBMIT(event);
+	}
 }
 
 void ncell_notification_handler(const struct lte_lc_evt *const evt)
