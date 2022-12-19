@@ -86,6 +86,17 @@ config LWM2M_CLIENT_UTILS_FIRMWARE_UPDATE_OBJ_SUPPORT
 
 if LWM2M_CLIENT_UTILS_FIRMWARE_UPDATE_OBJ_SUPPORT
 
+config LWM2M_CLIENT_UTILS_MODEM_FW_UPDATE_AUTO_VALIDATE
+	bool "Verify modem firmware at sys init"
+	depends on LWM2M_CLIENT_UTILS_FIRMWARE_UPDATE_REBOOT
+	depends on NRF_MODEM_LIB_SYS_INIT
+	help
+	  Enabling this option will cause the modem firmware to be verified before the application
+	  starts. This is to ensure that no application functionality gets to run before it
+	  is determined that the modem is in a healthy state after modem DFU. After modem FOTA it
+	  is normal that the device reboots.
+	  This option will cause a reboot if required by the modem after DFU.
+
 config LWM2M_CLIENT_UTILS_FIRMWARE_UPDATE_REBOOT
 	bool "Reboot after image has been applied"
 	default y

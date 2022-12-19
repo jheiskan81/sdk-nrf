@@ -21,6 +21,8 @@
 #include <zephyr/settings/settings.h>
 /* Firmware update needs access to internal functions as well */
 #include <lwm2m_engine.h>
+#include <zephyr/device.h>
+#include <zephyr/sys/reboot.h>
 
 #if defined(CONFIG_DFU_TARGET_FULL_MODEM)
 #include <dfu/dfu_target_full_modem.h>
@@ -227,6 +229,11 @@ static void reboot_work_handler(void)
 	!defined(CONFIG_ZTEST)
 
 	lwm2m_device_reboot_cb(0, NULL, 0);
+#elif defined(CONFIG_LWM2M_CLIENT_UTILS_FIRMWARE_UPDATE_REBOOT) &&                                 \
+	defined(CONFIG_LWM2M_CLIENT_UTILS_MODEM_FW_UPDATE_AUTO_VALIDATE)
+	LOG_PANIC();
+	sys_reboot(SYS_REBOOT_COLD);
+	LOG_WRN("Rebooting");
 #endif
 }
 /************** Wrappers between normal FOTA object and Advanced FOTA object ********/
@@ -1194,3 +1201,16 @@ int lwm2m_init_image(void)
 
 	return ret;
 }
+
+#if defined(CONFIG_LWM2M_CLIENT_UTILS_MODEM_FW_UPDATE_AUTO_VALIDATE)
+static int init(const struct device *unused)
+{
+	ARG_UNUSED(unused);
+
+	lwm2m_verify_modem_fw_update();
+
+	return 0;
+}
+
+SYS_INIT(init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+#endif /* CONFIG_LWM2M_CLIENT_UTILS_MODEM_FW_UPDATE_AUTO_VALIDATE */
