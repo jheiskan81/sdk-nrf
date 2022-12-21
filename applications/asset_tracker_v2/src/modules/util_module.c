@@ -242,7 +242,10 @@ static int setup(const struct device *dev)
 static void on_state_init(struct util_msg_data *msg)
 {
 	if (IS_EVENT(msg, cloud, CLOUD_EVT_FOTA_DONE)) {
-		send_reboot_request(REASON_FOTA_UPDATE);
+		/* Skip here if lwm2m */
+		if (!IS_ENABLED(CONFIG_LWM2M_INTEGRATION)) {
+			send_reboot_request(REASON_FOTA_UPDATE);
+		}
 	}
 
 	if ((IS_EVENT(msg, cloud, CLOUD_EVT_ERROR))	||
