@@ -24,8 +24,11 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 #define FIRMWARE_VERSION_MAJOR 1
 #define FIRMWARE_VERSION_MINOR 0
-
+#if defined(CONFIG_DFU_TARGET_SMP)
+#define MAX_INSTANCE_COUNT 3
+#else
 #define MAX_INSTANCE_COUNT 2
+#endif
 
 /* Firmware resource IDs */
 #define FIRMWARE_PACKAGE_ID			0
