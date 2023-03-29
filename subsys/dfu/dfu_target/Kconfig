@@ -19,6 +19,11 @@ config DFU_TARGET_MCUBOOT
 	help
 	  Enable support for updates that are performed by MCUboot.
 
+config DFU_TARGET_SMP
+	bool "SMP external update support"
+	help
+	  Enable support for Update external MCU by SMP client.
+
 config DFU_TARGET_STREAM
 	bool "Generic DFU stream target"
 	depends on STREAM_FLASH_ERASE
