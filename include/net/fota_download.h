@@ -92,6 +92,15 @@ typedef void (*fota_download_callback_t)(const struct fota_download_evt *evt);
  */
 int fota_download_init(fota_download_callback_t client_callback);
 
+/**@brief Initialize the firmware over-the-air download library for SMP Client.
+ *
+ * @param client_callback Callback for the generated events.
+ *
+ * @retval 0 If successfully initialized.
+ *           Otherwise, a negative value is returned.
+ */
+int fota_download_smp_init(fota_download_callback_t client_callback);
+
 /**@brief Start downloading the given file from the given host.
  *
  * When the download is complete, the secondary slot of MCUboot is tagged as having

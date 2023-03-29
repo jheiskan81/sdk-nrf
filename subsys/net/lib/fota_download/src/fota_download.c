@@ -34,6 +34,8 @@ LOG_MODULE_REGISTER(fota_download, CONFIG_FOTA_DOWNLOAD_LOG_LEVEL);
 
 static fota_download_callback_t callback;
 static struct download_client dlc;
+/** SMP MCUBoot image type */
+static bool use_smp_dfu_target;
 static struct k_work_delayable  dlc_with_offset_work;
 static int socket_retries_left;
 #ifdef CONFIG_DFU_TARGET_MCUBOOT
@@ -113,8 +115,13 @@ static int download_client_callback(const struct download_client_evt *event)
 				return err;
 			}
 			first_fragment = false;
-			img_type = dfu_target_img_type(event->fragment.buf,
-							event->fragment.len);
+			if (use_smp_dfu_target) {
+				/* Set SMP target type */
+				img_type = DFU_TARGET_IMAGE_TYPE_SMP;
+			} else {
+				img_type = dfu_target_img_type(event->fragment.buf,
+							       event->fragment.len);
+			}
 
 			if (img_type == DFU_TARGET_IMAGE_TYPE_NONE) {
 				LOG_ERR("Unknown image type");
@@ -445,7 +452,7 @@ int fota_download_start_with_image_type(const char *host, const char *file,
 	return 0;
 }
 
-int fota_download_init(fota_download_callback_t client_callback)
+static int fota_download_client_init(fota_download_callback_t client_callback, bool smp_image_type)
 {
 	if (client_callback == NULL) {
 		return -EINVAL;
@@ -471,6 +478,7 @@ int fota_download_init(fota_download_callback_t client_callback)
 		return err;
 	}
 #endif
+	use_smp_dfu_target = smp_image_type;
 
 	k_work_init_delayable(&dlc_with_offset_work, download_with_offset);
 
@@ -481,6 +489,16 @@ int fota_download_init(fota_download_callback_t client_callback)
 
 	first_fragment = true;
 	return 0;
+}
+
+int fota_download_init(fota_download_callback_t client_callback)
+{
+	return fota_download_client_init(client_callback, false);
+}
+
+int fota_download_smp_init(fota_download_callback_t client_callback)
+{
+	return fota_download_client_init(client_callback, true);
 }
 
 int fota_download_cancel(void)
