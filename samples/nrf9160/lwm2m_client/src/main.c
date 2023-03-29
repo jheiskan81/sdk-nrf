@@ -227,7 +227,7 @@ static int lwm2m_firmware_event_cb(struct lwm2m_fota_event *event)
 		break;
 	/** FOTA update new image */
 	case LWM2M_FOTA_UPDATE_IMAGE_REQ:
-		if (!ready_for_firmware_update) {
+		if (!ready_for_firmware_update && event->update_req.obj_inst_id < 2) {
 			state_trigger_and_unlock(UPDATE_FIRMWARE);
 			/* Postpone request by 2 seconds */
 			return 2;
